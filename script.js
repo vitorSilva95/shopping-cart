@@ -49,8 +49,8 @@ function getSkuFromProductItem(item) {
 }
 
 function cartItemClickListener(event) {
-
-  // coloque seu código aqui
+  const element = event.target.parentNode;
+  element.removeChild(event.target);
 }
 
 function createCartItemElement({ sku, name, salePrice }) {
@@ -97,6 +97,8 @@ window.onload = async () => {
   buttonAdd.forEach((button) => {
     button.addEventListener('click', onClickAddButton);
   });
-  
-  console.log(buttonAdd);
+  const ButtonClickRemoveItem = Array.from(document.querySelectorAll('.cart_item'));
+  ButtonClickRemoveItem.forEach((button) => {
+    button.addEventListener('click', onClickAddButton);
+  });
 };
