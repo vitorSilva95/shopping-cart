@@ -1,14 +1,18 @@
+function computerObject(currencyValue) {
+  return {
+    sku: currencyValue.id,
+    name: currencyValue.title,
+    image: currencyValue.thumbnail,
+  };
+}
+
 async function requestMerdadoLivre() {
   const collection = [];
   const response = await fetch('https://api.mercadolibre.com/sites/MLB/search?q=computador');
   const json = await response.json()
   .then((data) => data.results);
   json.forEach((currencyValue) => {
-  const computerObj = { 
-    sku: currencyValue.id,
-    name: currencyValue.title,
-    image: currencyValue.thumbnail,
-  };
+  const computerObj = computerObject(currencyValue);
   collection.push(computerObj);
 });
 return collection;
@@ -65,6 +69,34 @@ async function fetchObj() {
     sectionItems.appendChild(createELementItem);
     });
   }
+  async function requestMercadoLivreItem(id) {
+    const response = await fetch(`https://api.mercadolibre.com/items/${id}`);
+    const json = await response.json();
+    return json;
+  }
 
-// eslint-disable-next-line no-return-await
-window.onload = async () => await fetchObj();
+    async function onClickAddButton(event) {
+      const parent = event.target.parentNode;
+      const elements = parent.firstChild.innerText;
+      const cartItems = document.querySelectorAll('.cart__items')[0];
+      const apiItem = await requestMercadoLivreItem(elements)
+      .then((element) => {
+        const objItem = {
+          sku: element.id,
+          name: element.title,
+          salePrice: element.price,
+        };
+        return objItem;
+      });
+      cartItems.appendChild(createCartItemElement(apiItem));
+  }
+
+window.onload = async () => {
+  await fetchObj();
+  const buttonAdd = Array.from(document.getElementsByClassName('item__add'));
+  buttonAdd.forEach((button) => {
+    button.addEventListener('click', onClickAddButton);
+  });
+  
+  console.log(buttonAdd);
+};
