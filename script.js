@@ -48,9 +48,20 @@ function getSkuFromProductItem(item) {
   return item.querySelector('span.item__sku').innerText;
 }
 
+function totalItems(price, add) {
+  const total = document.getElementById('total-price');
+  const precoCalc = price * (add ? 1 : -1);
+  const precoAtual = parseFloat(total.innerText ? total.innerText : '0');
+  total.innerText = (Math.round(((precoAtual + precoCalc) * 100)) / 100);
+}
+
 function cartItemClickListener(event) {
   const element = event.target.parentNode;
+  const indexPreco = (event.target).innerText.split('$');
+  const price = parseFloat(indexPreco[1]);
+  totalItems(price, false);
   element.removeChild(event.target);
+  saveLocalStorage();
 }
 
 function createCartItemElement({ sku, name, salePrice }) {
@@ -58,6 +69,7 @@ function createCartItemElement({ sku, name, salePrice }) {
   li.className = 'cart__item';
   li.innerText = `SKU: ${sku} | NAME: ${name} | PRICE: $${salePrice}`;
   li.addEventListener('click', cartItemClickListener);
+  totalItems(salePrice, true);
   return li;
 }
 
@@ -75,6 +87,26 @@ async function fetchObj() {
     return json;
   }
 
+  function saveLocalStorage() {
+    const ol = document.querySelectorAll('.cart__items')[0];
+    localStorage.setItem('ol', JSON.stringify(Array.from(ol.childNodes).map((el) => el.innerText)));
+  }
+
+  function getLocalStorage() {
+    const element = JSON.parse(localStorage.getItem('ol') ?? '[]');
+    const cartItems = document.querySelectorAll('.cart__items')[0];
+
+    element.forEach((valor) => {
+      const valueArray = valor.split(' | ');
+      const obj = {
+        sku: valueArray[0].replace('SKU: ',''),
+        name: valueArray[1].replace('NAME: ',''),
+        salePrice: valueArray[2].replace('PRICE: $',''),
+      };
+      cartItems.appendChild(createCartItemElement(obj));
+    });
+  }
+
     async function onClickAddButton(event) {
       const parent = event.target.parentNode;
       const elements = parent.firstChild.innerText;
@@ -89,9 +121,11 @@ async function fetchObj() {
         return objItem;
       });
       cartItems.appendChild(createCartItemElement(apiItem));
+      saveLocalStorage();
   }
 
 window.onload = async () => {
+  getLocalStorage();
   await fetchObj();
   const buttonAdd = Array.from(document.getElementsByClassName('item__add'));
   buttonAdd.forEach((button) => {
