@@ -6,6 +6,10 @@ function computerObject(currencyValue) {
   };
 }
 
+function getCartItems() {
+  return document.querySelectorAll('.cart__items')[0];
+}
+
 async function requestMerdadoLivre() {
   const collection = [];
   const response = await fetch('https://api.mercadolibre.com/sites/MLB/search?q=computador');
@@ -55,6 +59,11 @@ function totalItems(price, add) {
   total.innerText = (Math.round(((precoAtual + precoCalc) * 100)) / 100);
 }
 
+function saveLocalStorage() {
+  const ol = getCartItems();
+  localStorage.setItem('ol', JSON.stringify(Array.from(ol.childNodes).map((el) => el.innerText)));
+}
+
 function cartItemClickListener(event) {
   const element = event.target.parentNode;
   const indexPreco = (event.target).innerText.split('$');
@@ -87,21 +96,16 @@ async function fetchObj() {
     return json;
   }
 
-  function saveLocalStorage() {
-    const ol = document.querySelectorAll('.cart__items')[0];
-    localStorage.setItem('ol', JSON.stringify(Array.from(ol.childNodes).map((el) => el.innerText)));
-  }
-
   function getLocalStorage() {
-    const element = JSON.parse(localStorage.getItem('ol') ?? '[]');
-    const cartItems = document.querySelectorAll('.cart__items')[0];
+    const element = JSON.parse(localStorage.getItem('ol') || '[]');
+    const cartItems = getCartItems();
 
     element.forEach((valor) => {
       const valueArray = valor.split(' | ');
       const obj = {
-        sku: valueArray[0].replace('SKU: ',''),
-        name: valueArray[1].replace('NAME: ',''),
-        salePrice: valueArray[2].replace('PRICE: $',''),
+        sku: valueArray[0].replace('SKU: ', ''),
+        name: valueArray[1].replace('NAME: ', ''),
+        salePrice: valueArray[2].replace('PRICE: $', ''),
       };
       cartItems.appendChild(createCartItemElement(obj));
     });
@@ -110,7 +114,7 @@ async function fetchObj() {
     async function onClickAddButton(event) {
       const parent = event.target.parentNode;
       const elements = parent.firstChild.innerText;
-      const cartItems = document.querySelectorAll('.cart__items')[0];
+      const cartItems = getCartItems();
       const apiItem = await requestMercadoLivreItem(elements)
       .then((element) => {
         const objItem = {
