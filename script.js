@@ -1,8 +1,26 @@
-function computerObject(currencyValue) {
+function createCustomElement(element, className, innerText) {
+  const e = document.createElement(element);
+  e.className = className;
+  e.innerText = innerText;
+  return e;
+}
+
+async function fetchLoading(url) {
+  const container = document.getElementsByClassName('container')[0];
+  const loading = createCustomElement('section', 'loading', '');
+  const loadingSpan = createCustomElement('span', '', '...loading');
+  loading.appendChild(loadingSpan);
+  container.appendChild(loading);
+  const response = await fetch(url);
+  container.removeChild(loading);
+  return response;
+}
+
+function computerObject(currentValue) {
   return {
-    sku: currencyValue.id,
-    name: currencyValue.title,
-    image: currencyValue.thumbnail,
+    sku: currentValue.id,
+    name: currentValue.title,
+    image: currentValue.thumbnail,
   };
 }
 
@@ -12,11 +30,11 @@ function getCartItems() {
 
 async function requestMerdadoLivre() {
   const collection = [];
-  const response = await fetch('https://api.mercadolibre.com/sites/MLB/search?q=computador');
+  const response = await fetchLoading('https://api.mercadolibre.com/sites/MLB/search?q=computador');
   const json = await response.json()
   .then((data) => data.results);
-  json.forEach((currencyValue) => {
-  const computerObj = computerObject(currencyValue);
+  json.forEach((currentValue) => {
+  const computerObj = computerObject(currentValue);
   collection.push(computerObj);
 });
 return collection;
@@ -29,13 +47,6 @@ function createProductImageElement(imageSource) {
   return img;
 }
 
-function createCustomElement(element, className, innerText) {
-  const e = document.createElement(element);
-  e.className = className;
-  e.innerText = innerText;
-  return e;
-}
-
 function createProductItemElement({ sku, name, image }) {
   const section = document.createElement('section');
   section.className = 'item';
@@ -46,10 +57,6 @@ function createProductItemElement({ sku, name, image }) {
   section.appendChild(createCustomElement('button', 'item__add', 'Adicionar ao carrinho!'));
 
   return section;
-}
-
-function getSkuFromProductItem(item) {
-  return item.querySelector('span.item__sku').innerText;
 }
 
 function totalItems(price, add) {
@@ -82,7 +89,7 @@ function createCartItemElement({ sku, name, salePrice }) {
   return li;
 }
 
-async function fetchObj() {
+async function fetchWithLoadingObj() {
   const sectionItems = document.getElementsByClassName('items')[0];
   const computerItems = await requestMerdadoLivre();
   computerItems.forEach((element) => {
@@ -91,7 +98,7 @@ async function fetchObj() {
     });
   }
   async function requestMercadoLivreItem(id) {
-    const response = await fetch(`https://api.mercadolibre.com/items/${id}`);
+    const response = await fetchLoading(`https://api.mercadolibre.com/items/${id}`);
     const json = await response.json();
     return json;
   }
@@ -128,9 +135,17 @@ async function fetchObj() {
       saveLocalStorage();
   }
 
+  function emptyCart() {
+    const cart = getCartItems();
+    cart.innerText = '';
+    const total = document.getElementById('total-price');
+    total.innerText = '';
+    localStorage.removeItem('ol');
+  }
+
 window.onload = async () => {
   getLocalStorage();
-  await fetchObj();
+  await fetchWithLoadingObj();
   const buttonAdd = Array.from(document.getElementsByClassName('item__add'));
   buttonAdd.forEach((button) => {
     button.addEventListener('click', onClickAddButton);
@@ -139,4 +154,6 @@ window.onload = async () => {
   ButtonClickRemoveItem.forEach((button) => {
     button.addEventListener('click', onClickAddButton);
   });
+  const buttonEmptyCart = document.getElementsByClassName('empty-cart')[0];
+  buttonEmptyCart.addEventListener('click', emptyCart);
 };
